@@ -1,0 +1,50 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name:  ingress-registry
+  annotations:
+          #    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    #nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    #nginx.ingress.kubernetes.io/secure-backends: "true"
+    #nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: registry1.hoangbaoochii.id
+    http:
+      paths:
+      - backend:
+          service:
+            name: ingress-registry
+            port:
+              number: 80
+        pathType: Prefix
+        path: /
+  tls:
+    - hosts:
+      -  registry1.hoangbaoochii.id
+      secretName: registry1.hoangbaoochii.id-tls
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingress-registry
+spec:
+  ports:
+  - port: 80
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+ name: ingress-registry
+subsets:
+  - addresses:
+    - ip: 192.168.200.105
+    ports:
+    - port: 80

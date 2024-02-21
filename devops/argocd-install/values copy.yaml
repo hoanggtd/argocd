@@ -1,0 +1,175 @@
+argo-cd:
+  config:
+    params:
+      controller.repo.server.timeout.seconds: 180
+    secret:
+      gitlabSecret: "Jb3Z9m6Wnrm6AJc0LHGjj"
+# -- Shared secret for authenticating GitLab webhook events for argocd
+  repoServer:
+    metrics:
+      enabled: true
+      # serviceMonitor:
+      #   enabled: true
+
+  dex:
+    metrics:
+      enabled: true
+      # serviceMonitor:
+      #   enabled: true
+
+  redis:
+    metrics:
+      enabled: true
+      # serviceMonitor:
+      #   enabled: true
+
+  applicationSet:
+    metrics:
+      enabled: true
+      # serviceMonitor:
+      #   enabled: true
+    serviceAccount:
+      automountServiceAccountToken: true
+
+  notifications:
+    metrics:
+      enabled: true
+      # serviceMonitor:
+      #   enabled: true
+    serviceAccount:
+      automountServiceAccountToken: true
+
+  controller:
+    metrics:
+      enabled: true
+      # serviceMonitor:
+      #   enabled: true
+    extraArgs:
+      - --metrics-application-labels
+      - owner
+      - --metrics-application-labels
+      - pic
+      - --metrics-application-labels
+      - source-repo
+
+  server:
+    extraArgs:
+    - --insecure
+    service:
+      type: NodePort
+    metrics:
+      enabled: true
+      # serviceMonitor:
+      #   enabled: true
+    #tolerations:
+    #- key: node-role.kubernetes.io/control-plane
+    #  effect: "NoSchedule"
+
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      annotations:
+        kubernetes.io/ingress.class: nginx
+        kubernetes.io/tls-acme: true
+        nginx.ingress.kubernetes.io/backend-protocol: HTTP
+      hosts:
+        - argocd1.hoangbaoochii.id
+      paths:
+        - /
+      tls:
+        - secretName: argocd-tls-certificate
+          hosts:
+            - argocd1.hoangbaoochii.id
+    config:
+      url: https://argocd1.hoangbaoochii.id
+      exec.enabled: true
+      admin.enabled: false
+      dex.config: |
+        connectors:
+          - type: gitlab
+            id: gitlab
+            name: GitLab
+            config:
+              baseURL: https://gitlab1.hoangbaoochii.id
+              clientID: c15171cde211e712567ced12924e09ad60d5f6b1ff54f265fc32244060ba9f8e
+              clientSecret: gloas-7ccd80ef659b6c33619fe9e347e8233d130af8a47af61127e0f5b0cb4dcaa8f1
+    rbacConfig:
+      policy.csv: |
+        g, hoangtd@ftech.ai, role:admin
+      scopes: "[email, groups]"
+
+argocd-apps:
+  applications:
+  - name: argocd
+    namespace: argocd
+    destination:
+      namespace: argocd
+      server: https://kubernetes.default.svc
+    project: argocd
+    source:
+      helm:
+        version: v3
+      path: argocd-install
+      repoURL: https://gitlab1.hoangbaoochii.id/galaxy-prod/devops.git
+      targetRevision: HEAD
+    syncPolicy:
+      # automated:
+      #   selfHeal: true
+      #   prune: true
+      syncOptions:
+      - CreateNamespace=true
+  - name: argocd-apps
+    namespace: argocd
+    destination:
+      namespace: argocd
+      server: https://kubernetes.default.svc
+    project: argocd
+    source:
+      path: argocd-apps/app-of-apps
+      repoURL: https://gitlab1.hoangbaoochii.id/galaxy-prod/devops.git
+      targetRevision: HEAD
+      # directory:
+      #   recurse: false
+      #   jsonnet: {}
+    syncPolicy:
+       automated:
+         selfHeal: true
+         prune: true
+  - name: argocd-appproject
+    namespace: argocd
+    destination:
+      namespace: argocd
+      server: https://kubernetes.default.svc
+    project: argocd
+    source:
+      path: argocd-appproject
+      repoURL: https://gitlab1.hoangbaoochii.id/galaxy-prod/devops.git
+      targetRevision: HEAD
+      directory:
+        recurse: true
+        jsonnet: {}
+    syncPolicy:
+      # automated:
+      #   selfHeal: true
+      #   prune: true
+  projects:
+  - name: argocd
+    namespace: argocd
+    additionalLabels: {}
+    additionalAnnotations: {}
+    description: Argocd Project
+    sourceRepos:
+    - '*'
+    destinations:
+    - namespace: "*"
+      server: "*"
+    - namespace: argocd
+      server: https://kubernetes.default.svc
+    - namespace: external-secrets
+      server: https://kubernetes.default.svc
+    clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+    orphanedResources:
+      warn: false
+

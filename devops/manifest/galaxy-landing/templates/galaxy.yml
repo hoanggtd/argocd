@@ -1,0 +1,32 @@
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels: {{ include "common.labels.svc" . | nindent 6 }}
+spec:
+  selector:
+    matchLabels: {{ include "common.labels" . | nindent 8 }}
+  replicas: {{ .Values.replicas }}
+  template:
+    metadata:
+      labels: {{ include "common.labels" . | nindent 10 }}
+    spec:
+      containers:
+        - image: "{{ .Values.images.repository }}:{{ .Values.images.tag }}"
+          name: {{ .Release.Name }}-image
+          ports:
+            - containerPort: {{ .Values.port }}
+              name: {{ .Release.Name }}
+      imagePullSecrets:
+        - name: registrykey
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}
+  labels: {{ include "common.labels.svc" . | nindent 6 }}
+spec:
+  ports:
+    - port: {{ .Values.port }}
+  selector: {{ include "common.labels" . | nindent 6 }}
+  type: LoadBalancer

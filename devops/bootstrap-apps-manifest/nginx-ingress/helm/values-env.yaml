@@ -1,0 +1,35 @@
+ingress-nginx:
+  enabled: true
+  controller:
+    config:
+      compute-full-forwarded-for: true
+      enable-real-ip: true
+      use-forwarded-headers: true
+      annotation-value-word-blocklist: "load_module,lua_package,_by_lua,root,proxy_pass,serviceaccount"
+    daemonset:
+      hostPorts:
+        http: 80
+        https: 443
+      useHostPort: true
+    hostNetwork: true
+    kind: DaemonSet
+    metrics:
+      enabled: true
+      service:
+        annotations:
+          prometheus.io/port: "10254"
+          prometheus.io/scrape: "true"
+        
+      serviceMonitor:
+        enabled: true
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+    service:
+      type: LoadBalancer
+      externalIPs:
+      - 10.1.20.35
+      - 10.1.20.36
+      - 10.1.20.38
+    priorityClassName: system-cluster-critical

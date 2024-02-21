@@ -1,0 +1,7 @@
+replicas: 3
+port: 80
+dommain: lab.hoangbaoochii.id
+imagepull: registry1.hoangbaoochii.id/galaxy/galaxy-landing:lastest
+images:
+  repository: ""
+  tag: lastest
