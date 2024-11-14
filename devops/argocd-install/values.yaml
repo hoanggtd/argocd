@@ -1,5 +1,18 @@
 argo-cd:
   config:
+    cm:
+      create: true
+      resource.ignoreResourceUpdatesEnabled: true
+      resource.customizations.ignoreResourceUpdates.external-secrets.io_ExternalSecret: |
+        jsonPointers:
+        - /status/refreshTime
+      resource.customizations.ignoreResourceUpdates.argoproj.io_Application: |
+        jsonPointers:
+        - /status/reconciledAt
+        - /metadata/ownerReferences
+      resource.customizations.ignoreResourceUpdates.autoscaling_HorizontalPodAutoscaler: |
+        jsonPointers:
+        - /metadata/annotations/autoscaling.alpha.kubernetes.io~1current-metrics
     params:
       controller.repo.server.timeout.seconds: 180
     secret:
